@@ -1,103 +1,124 @@
-<img width="1280" height="640" alt="git (1)" src="https://github.com/user-attachments/assets/8920b256-2ba8-4988-b824-5351134eb4bd" />
-
-
-
-# [Project Name] 🎯
-
+# Venda Mone 🎯
 
 ## Basic Details
-### Team Name: [Name]
-
 
 ### Team Members
-- Team Lead: [Name] - [College]
-- Member 2: [Name] - [College]
-- Member 3: [Name] - [College]
+- Team Lead: Niranjana J Warrier - LBS Institute of Technology for Women
 
 ### Project Description
-[2-3 lines about what your project does]
+A chaotic cursor-tag simulator and psychological morality test where you chase an anxious virtual entity trying its best to avoid you. If you lack self-control and click it while it's begging for its life, you’re dragged straight into a gothic underworld jail under "Chaathan presiding"—complete with heavy iron bars, brutal sarcasm, and a mandatory apology letter that gets aggressively judged by the system. Show a little restraint and leave it alone, though, and you'll ascend straight to heaven to bask in lavish praises, karma ledgers, and respect scores. Packed with 20 unique unlockable creatures, a stunning Dark Academia glassmorphism UI, custom web audio soundscapes, and an embedded horror scream effect, it's the ultimate way to find out if you're actually a good person or just an absolute menace to digital wildlife.
 
 ### The Problem (that doesn't exist)
-[What ridiculous problem are you solving?]
+Humanity faces an urgent, completely fabricated crisis: how to test whether people have the basic moral restraint not to torment an innocent, anxious virtual creature. Society is plagued by the overwhelming urge to click things we have no business touching, leaving us with no lightweight, browser-based way to judge our own life choices.
 
 ### The Solution (that nobody asked for)
-[How are you solving it? Keep it fun!]
+A chaotic cursor-tag simulator and psychological morality test where your choice to show restraint or give in to temptation decides your fate. Choose wisely and ascend to heaven for praise; give in, click the crying creature, and get dragged into a gothic underworld jail under "Chaathan presiding" to face heavy iron bars, brutal sarcasm, and a mandatory AI-judged apology letter. Complete with an 80-point collection of 20 paranoid pets, Dark Academia glassmorphism UI, custom web audio soundscapes, and an embedded horror scream, it is the ultimate tool to prove whether you are a good person or an absolute menace.
 
 ## Technical Details
 ### Technologies/Components Used
 For Software:
-- [Languages used]
-- [Frameworks used]
-- [Libraries used]
-- [Tools used]
+- HTML5
+- Tailwind CSS (via CDN)[cite: 2]
+- Vanilla JavaScript[cite: 2]
+- Web Audio API & Base64 Audio Data URIs[cite: 2]
 
 For Hardware:
-- [List main components]
-- [List specifications]
-- [List tools required]
+- Standard student laptop/desktop computer
+- Standard mouse or cursor input device
 
 ### Implementation
 For Software:
 # Installation
-[commands]
+```bash
+# Clone the repository or download the source code
+git clone [https://github.com/niranjanajwarrier2006-debug/venda-mone.git](https://github.com/niranjanajwarrier2006-debug/venda-mone.git)
 
-# Run
-[commands]
+# Navigate into the project folder
+cd venda-mone
+To Run:
+# Open index.html directly in any modern web browser or run via VS Code Live Server
+start index.html
 
-### Project Documentation
+Project Documentation
 For Software:
+Screenshots
 
-# Screenshots (Add at least 3)
-![Screenshot1](Add screenshot 1 here with proper name)
-*Add caption explaining what this shows*
 
-![Screenshot2](Add screenshot 2 here with proper name)
-*Add caption explaining what this shows*
 
-![Screenshot3](Add screenshot 3 here with proper name)
-*Add caption explaining what this shows*
+![alt text](<Screenshot 2026-09-04 033629-1.png>)
+![alt text](<Screenshot 2026-09-04 033704.png>)
+![alt text](<Screenshot 2026-09-04 033714.png>)
+![alt text](<Screenshot 2026-09-04 033727.png>)
+![alt text](<Screenshot 2026-09-04 033805.png>)
+![alt text](<Screenshot 2026-09-04 033854.png>)
 
-# Diagrams
-![Workflow](Add your workflow/architecture diagram here)
-*Add caption explaining your workflow*
+Diagrams
+[ Start / Idle State ]
+         │
+         │ (Cursor approaches / distance drops)
+         ▼
+    [ Fleeing State ]
+         │
+         ├── (Panic threshold / rapid movement) ──► [ Panic State ]
+         │                                              │
+         └── (Energy drained / depletion) ◄─────────────┘
+                         │
+                         ▼
+                [ Exhausted State ]
+         (7-second countdown + pleading dialogue)
+                         │
+          ┌──────────────┴──────────────┐
+          │                             │
+    (Player clicks)             (Timer reaches 0)
+          │                             │
+          ▼                             ▼
+   [ Hell Outcome ]             [ Heaven Outcome ]
+- Chaathan Presiding         - Karma Ledger & Titles
+- Heavy Iron Bar Jail        - Respect Score Bar
+- Heuristic Apology Trial    - Sincere Compliments
+- Unlock Points Banked       - Creature Unlock System
 
-For Hardware:
+stateDiagram-v2
+    direction TB
+    
+    [*] --> Idle: Game Starts
+    
+    Idle --> Fleeing: Cursor Approaches
+    Fleeing --> Panic: Rapid Evasion / High Speed
+    Panic --> Exhausted: Energy Depleted (0-100)
+    Fleeing --> Exhausted: Energy Depleted (0-100)
+    
+    state Exhausted {
+        [*] --> PleadingDialogue: 7-Second Countdown Begins
+    }
 
-# Schematic & Circuit
-![Circuit](Add your circuit diagram here)
-*Add caption explaining connections*
+    Exhausted --> HellOutcome: Player Clicks (Moral Failure)
+    Exhausted --> HeavenOutcome: Timer Reaches 0 (Restraint Shown)
 
-![Schematic](Add your schematic diagram here)
-*Add caption explaining the schematic*
+    state HellOutcome {
+        [*] --> ChaathanPresiding
+        ChaathanPresiding --> IronBarJail
+        IronBarJail --> HeuristicApologyTrial
+    }
 
-# Build Photos
-![Components](Add photo of your components here)
-*List out all components shown*
+    state HeavenOutcome {
+        [*] --> KarmaLedger
+        KarmaLedger --> RespectScoreBar
+        RespectScoreBar --> CreatureUnlockSystem
+    }
 
-![Build](Add photos of build process here)
-*Explain the build steps*
+    HellOutcome --> [*]
+    HeavenOutcome --> [*]
 
-![Final](Add photo of final product here)
-*Explain the final build*
 
-### Project Demo
-# Video
+Project Demo
+Video
 [Add your demo video link here]
-*Explain what the video demonstrates*
-
-# Additional Demos
-[Add any extra demo materials/links]
-
-## Team Contributions
-- [Name 1]: [Specific contributions]
-- [Name 2]: [Specific contributions]
-- [Name 3]: [Specific contributions]
-
----
-Made with ❤️ at TinkerHub Useless Projects 
-
-![Static Badge](https://img.shields.io/badge/TinkerHub-24?color=%23000000&link=https%3A%2F%2Fwww.tinkerhub.org%2F)
-![Static Badge](https://img.shields.io/badge/UselessProjects--26-26?link=https%3A%2F%2Ftinkerhub.org%2Fevents%2F1M8ORET9A1%2Fuseless-projects-3.0)
+Demonstrates the full gameplay loop, creature evasion, collection unlocks, and audio integration[cite: 2].
 
 
+Team Contributions
+Niranjana J Warrier: Solo development — handled everything from core game logic, state machine architecture, and movement mechanics to the apology evaluation algorithm, creature collection system, Dark Academia UI/UX styling, and Web Audio/Base64 sound integration[cite: 2].
+
+Made with ❤️ at TinkerHub Useless Projects
 
