@@ -113,7 +113,7 @@ stateDiagram-v2
 
 Project Demo
 Video
-[Add your demo video link here]
+https://drive.google.com/file/d/1JQjEhVraLXAg7KMMg01qbdxDtQ9BzG97/view?usp=sharing
 Demonstrates the full gameplay loop, creature evasion, collection unlocks, and audio integration[cite: 2].
 
 
