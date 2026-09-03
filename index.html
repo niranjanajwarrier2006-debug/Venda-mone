@@ -1,1 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Venda Mone</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{
+    --meadow-sky-a:#EAF4FF;
+    --meadow-sky-b:#FDEFF9;
+    --meadow-ground:#BFE3B4;
+    --creature-body:#FF8C69;
+    --creature-belly:#FFF3E0;
+    --ink:#33302A;
+    --heaven-gold:#F3D48A;
+    --heaven-cream:#FFFBF0;
+    --heaven-plum:#4A3728;
+    --hell-ember:#8C1C13;
+    --hell-char:#170808;
+    --hell-flame:#FF5A1F;
+    --hell-bone:#F5E9DA;
+  }
 
+  html,body{
+    height:100%;
+    margin:0;
+    overflow:hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Segoe UI Rounded", ui-rounded, system-ui, Roboto, sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  * { box-sizing: border-box; }
+
+  button:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
+    outline: 3px solid #4A90D9;
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+
+  /* ---------- screens ---------- */
+  .screen{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none;
+    transition: opacity .6s ease;
+  }
+  .screen.active{ opacity:1; pointer-events:auto; }
+
+  /* ---------- game screen ---------- */
+  #game-screen{
+    background: radial-gradient(120% 90% at 50% -10%, var(--meadow-sky-b), var(--meadow-sky-a) 60%);
+    overflow:hidden;
+    cursor: crosshair;
+  }
+  .ground{
+    position:absolute; left:0; right:0; bottom:0; height:14vh;
+    background: linear-gradient(180deg, var(--meadow-ground), #9FCE8F);
+    border-top: 3px solid #8FBF80;
+  }
+  .cloud{
+    position:absolute; background:#fff; border-radius:999px; opacity:.75;
+    filter: blur(0.5px);
+  }
+
+  .creature-wrap{
+    position:absolute; left:0; top:0;
+    width:96px; height:96px;
+    will-change: transform;
+    transform: translate3d(0,0,0);
+    cursor: pointer;
+    user-select:none;
+  }
+  .creature-inner{
+    width:100%; height:100%;
+    transform-origin: 50% 65%;
+    transition: transform .12s ease-out;
+  }
+  .breathing .creature-inner{ animation: breathe 2.6s ease-in-out infinite; }
+  @keyframes breathe{
+    0%,100%{ transform: scale(1,1); }
+    50%{ transform: scale(1.045,0.96); }
+  }
+  .shiver .creature-inner{ animation: shiver .22s ease-in-out infinite; }
+  @keyframes shiver{
+    0%,100%{ transform: translate(0,0) rotate(0deg); }
+    25%{ transform: translate(-1.5px,0.5px) rotate(-1.5deg); }
+    75%{ transform: translate(1.5px,-0.5px) rotate(1.5deg); }
+  }
+  .blink{ animation: blink .18s ease; }
+  @keyframes blink{ 0%,100%{ transform: scaleY(1);} 50%{ transform: scaleY(0.08);} }
+
+  /* ---------- creature visual (emoji-based, colorized per creature) ---------- */
+  .creature-emoji-glow{
+    position:absolute; inset:6px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, var(--creature-belly), var(--creature-body) 78%);
+    box-shadow: 0 8px 20px rgba(0,0,0,.14);
+    z-index:0;
+  }
+  .creature-emoji{
+    position:relative; z-index:1;
+    display:flex; align-items:center; justify-content:center;
+    width:100%; height:100%;
+    font-size:52px;
+    line-height:1;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,.18));
+  }
+
+  /* small idle-animation variants, assigned per creature */
+  .anim-bob .creature-inner{ animation: bob-kf 2.3s ease-in-out infinite; }
+  @keyframes bob-kf{
+    0%,100%{ transform: translateY(0) scale(1,1); }
+    50%{ transform: translateY(-5px) scale(1.02,0.98); }
+  }
+  .anim-sway .creature-inner{ animation: sway-kf 3s ease-in-out infinite; }
+  @keyframes sway-kf{
+    0%,100%{ transform: rotate(0deg); }
+    50%{ transform: rotate(4deg); }
+  }
+  .anim-wiggle .creature-inner{ animation: wiggle-kf 1.6s ease-in-out infinite; }
+  @keyframes wiggle-kf{
+    0%,100%{ transform: rotate(0deg) scale(1,1); }
+    25%{ transform: rotate(-3deg) scale(1.01,0.99); }
+    75%{ transform: rotate(3deg) scale(0.99,1.01); }
+  }
+  .anim-pulse .creature-inner{ animation: pulse-kf 2s ease-in-out infinite; }
+  @keyframes pulse-kf{
+    0%,100%{ transform: scale(1,1); }
+    50%{ transform: scale(1.06,1.06); }
+  }
+
+  .speech-bubble{
+    position:absolute;
+    bottom: 108%;
+    left:50%;
+    transform: translateX(-50%) translateY(6px);
+    width: max-content;
+    max-width: 260px;
+    background: #fff;
+    color:#33302A;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    line-height:1.35;
+    box-shadow: 0 8px 24px rgba(0,0,0,.14);
+    opacity:0;
+    transition: opacity .35s ease, transform .35s ease;
+    pointer-events:none;
+  }
+  .speech-bubble::after{
+    content:"";
+    position:absolute; left:50%; top:100%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color:#fff;
+  }
+  .speech-bubble.show{ opacity:1; transform: translateX(-50%) translateY(0); }
+
+  .danger-ring{
+    position:absolute; inset:-10px;
+    border-radius:999px;
+    box-shadow: 0 0 0 3px rgba(255,90,31,.65);
+    opacity:0;
+    animation: pulse-danger 1s ease-in-out infinite;
+  }
+  .exhausted .danger-ring{ opacity:1; }
+  @keyframes pulse-danger{
+    0%,100%{ box-shadow: 0 0 0 2px rgba(255,90,31,.35); }
+    50%{ box-shadow: 0 0 0 7px rgba(255,90,31,.12); }
+  }
+
+  #countdown-ring{ transform: rotate(-90deg); }
+  #countdown-ring circle{
+    transition: stroke-dashoffset 0.2s linear;
+  }
+
+  .float-toast{
+    position:absolute;
+    font-size:12px;
+    font-weight:600;
+    color:#4A3728;
+    background:#fff;
+    padding:4px 10px;
+    border-radius:999px;
+    box-shadow:0 4px 12px rgba(0,0,0,.12);
+    pointer-events:none;
+    animation: float-up 900ms ease-out forwards;
+    white-space:nowrap;
+  }
+  @keyframes float-up{
+    0%{ opacity:0; transform: translate(-50%,0) scale(.85); }
+    15%{ opacity:1; transform: translate(-50%,-6px) scale(1); }
+    100%{ opacity:0; transform: translate(-50%,-46px) scale(1); }
+  }
+
+  .energy-fill{ transition: width .25s ease, background-color .4s ease; }
+
+  /* ---------- heaven ---------- */
+  #heaven-screen{
+    background: radial-gradient(120% 100% at 50% 0%, #FFFDF6, var(--heaven-gold) 120%);
+    color: var(--heaven-plum);
+  }
+  .ray{
+    position:absolute; top:-20%; left:50%;
+    width:3px; height:140%;
+    background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,0));
+    transform-origin: top center;
+    opacity:.55;
+    animation: ray-sway 7s ease-in-out infinite;
+  }
+  @keyframes ray-sway{
+    0%,100%{ opacity:.35; }
+    50%{ opacity:.65; }
+  }
+  .puff{
+    position:absolute; background:#fff; border-radius:999px; opacity:.9;
+    box-shadow: 0 10px 30px rgba(230,190,110,.35);
+  }
+  .heaven-card{
+    animation: rise-in .7s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes rise-in{
+    from{ opacity:0; transform: translateY(26px) scale(.98); }
+    to{ opacity:1; transform: translateY(0) scale(1); }
+  }
+  .sparkle{
+    position:absolute; width:6px; height:6px; background:#fff;
+    clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+    animation: twinkle 1.8s ease-in-out infinite;
+  }
+  @keyframes twinkle{ 0%,100%{ opacity:.2; transform:scale(.7);} 50%{ opacity:1; transform:scale(1);} }
+
+  /* ---------- hell ---------- */
+  #hell-screen{
+    background: radial-gradient(120% 100% at 50% 120%, var(--hell-ember), var(--hell-char) 70%);
+    color: var(--hell-bone);
+  }
+  .ember{
+    position:absolute; bottom:-5%; border-radius:999px;
+    background: radial-gradient(circle at 30% 30%, #FFD08A, var(--hell-flame) 60%, transparent 70%);
+    opacity:.85;
+    animation: rise-ember linear infinite;
+  }
+  @keyframes rise-ember{
+    0%{ transform: translateY(0) translateX(0); opacity:.9; }
+    100%{ transform: translateY(-115vh) translateX(var(--drift,0px)); opacity:0; }
+  }
+  .devil-card{ animation: drop-in .6s cubic-bezier(.2,.8,.2,1); }
+  @keyframes drop-in{
+    from{ opacity:0; transform: translateY(-24px) scale(.97); }
+    to{ opacity:1; transform: translateY(0) scale(1); }
+  }
+  .flicker{ animation: flicker 3.4s ease-in-out infinite; }
+  @keyframes flicker{
+    0%,100%{ opacity:1; } 45%{ opacity:.96;} 47%{opacity:.8;} 49%{opacity:.98;} 72%{opacity:.9;}
+  }
+
+  .hell-taunt{
+    animation: shake-in .35s ease;
+  }
+  @keyframes shake-in{
+    0%{ transform: translateX(0); opacity:0; }
+    20%{ transform: translateX(-6px); opacity:1; }
+    40%{ transform: translateX(5px); }
+    60%{ transform: translateX(-3px); }
+    80%{ transform: translateX(2px); }
+    100%{ transform: translateX(0); }
+  }
+
+  ::-webkit-scrollbar{ width:8px; }
+  ::-webkit-scrollbar-thumb{ background:rgba(0,0,0,.2); border-radius:999px; }
+</style>
+</head>
+<body>
+
+<!-- ============ GAME SCREEN ============ -->
+<div id="game-screen" class="screen active">
+
+  <div class="ground"></div>
+
+  <!-- decorative clouds -->
+  <div class="cloud" style="width:120px;height:40px; top:8%; left:10%;"></div>
+  <div class="cloud" style="width:80px;height:28px; top:14%; left:14%;"></div>
+  <div class="cloud" style="width:150px;height:46px; top:6%; right:8%;"></div>
+  <div class="cloud" style="width:90px;height:30px; top:12%; right:14%;"></div>
+  <div class="cloud" style="width:100px;height:34px; top:22%; left:46%;"></div>
+
+  <!-- top HUD -->
+  <div class="absolute top-0 left-0 right-0 px-5 sm:px-8 pt-5 flex items-start justify-between pointer-events-none">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight" style="color:#4A3728;">Venda Mone</h1>
+      <p class="text-xs sm:text-sm opacity-70 mt-0.5">It's fast, it's scared, and it's watching your cursor.</p>
+      <p id="creature-name-label" class="text-xs sm:text-sm font-semibold mt-1" style="color:#5A4632;"></p>
+    </div>
+    <div class="text-right">
+      <div class="text-[11px] uppercase tracking-wide opacity-60 mb-1" style="letter-spacing:.04em;">energy</div>
+      <div class="w-32 sm:w-40 h-2.5 rounded-full bg-white/70 overflow-hidden shadow-inner">
+        <div id="energy-bar" class="energy-fill h-full rounded-full" style="width:100%; background:#7BC67E;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- the creature -->
+  <div id="creature" class="creature-wrap breathing">
+    <div class="danger-ring"></div>
+    <div id="speech-bubble" class="speech-bubble"></div>
+
+    <!-- countdown ring -->
+    <svg id="countdown-ring" width="112" height="112" viewBox="0 0 112 112" class="absolute -inset-2 pointer-events-none" style="opacity:0;">
+      <circle cx="56" cy="56" r="50" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="5"></circle>
+      <circle id="countdown-circle" cx="56" cy="56" r="50" fill="none" stroke="#FF5A1F" stroke-width="5"
+              stroke-linecap="round" stroke-dasharray="314.159" stroke-dashoffset="0"></circle>
+    </svg>
+    <div id="countdown-number" class="absolute inset-0 flex items-center justify-center text-white font-bold text-lg" style="opacity:0; text-shadow:0 1px 3px rgba(0,0,0,.4);"></div>
+
+    <div class="creature-inner">
+      <div class="creature-emoji-glow"></div>
+      <span id="creature-emoji" class="creature-emoji">🦊</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============ HEAVEN SCREEN ============ -->
+<div id="heaven-screen" class="screen">
+  <div class="ray" style="left:20%; transform: rotate(-8deg) scale(1.1);"></div>
+  <div class="ray" style="left:50%;"></div>
+  <div class="ray" style="left:78%; transform: rotate(8deg) scale(1.1);"></div>
+  <div class="puff" style="width:180px;height:60px; bottom:6%; left:4%;"></div>
+  <div class="puff" style="width:220px;height:70px; bottom:2%; right:2%;"></div>
+  <div class="puff" style="width:140px;height:44px; top:6%; left:38%;"></div>
+  <div class="sparkle" style="top:14%; left:22%;"></div>
+  <div class="sparkle" style="top:20%; right:18%; animation-delay:.4s;"></div>
+  <div class="sparkle" style="bottom:22%; left:16%; animation-delay:.9s;"></div>
+  <div class="sparkle" style="bottom:30%; right:24%; animation-delay:1.3s;"></div>
+
+  <div class="heaven-card relative w-[92vw] max-w-lg max-h-[88vh] overflow-y-auto rounded-3xl bg-white/85 backdrop-blur-sm shadow-2xl px-6 sm:px-9 py-8 sm:py-10 text-center border border-white">
+    <div id="heaven-creature-emoji" class="text-5xl mb-2">✨</div>
+    <p class="text-xs uppercase tracking-wide opacity-60 mb-1" style="letter-spacing:.06em;">you let it live</p>
+    <h2 id="heaven-title" class="text-2xl sm:text-3xl font-bold mb-1" style="color:#8A6A2A;">Keeper of Chill</h2>
+    <p class="text-sm opacity-75 mb-6">Somewhere, a small orange creature is still breathing because of you.</p>
+
+    <div class="grid grid-cols-2 gap-3 mb-6 text-left">
+      <div class="rounded-2xl bg-[#FFF7E3] p-4 border border-[#F0DDA6]">
+        <div class="text-xs opacity-60 mb-0.5">Karma gained</div>
+        <div id="heaven-karma" class="text-2xl font-bold" style="color:#B4791C;">+0</div>
+      </div>
+      <div class="rounded-2xl bg-[#FFF7E3] p-4 border border-[#F0DDA6]">
+        <div class="text-xs opacity-60 mb-0.5">Points earned</div>
+        <div id="heaven-points" class="text-2xl font-bold" style="color:#B4791C;">0</div>
+      </div>
+    </div>
+
+    <div class="mb-6 text-left">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-xs opacity-60">Respect score</span>
+        <span id="heaven-respect-num" class="text-xs font-semibold">0/100</span>
+      </div>
+      <div class="w-full h-3 rounded-full bg-[#F0E4C8] overflow-hidden">
+        <div id="heaven-respect-bar" class="h-full rounded-full" style="width:0%; background:linear-gradient(90deg,#F3C969,#E8A23A);"></div>
+      </div>
+    </div>
+
+    <div class="mb-6 text-left">
+      <div class="text-xs opacity-60 mb-2">Compliments, sincerely</div>
+      <ul id="heaven-compliments" class="space-y-1.5 text-sm"></ul>
+    </div>
+
+    <div class="mb-6 text-left">
+      <div class="text-xs opacity-60 mb-2">Karma ledger</div>
+      <div id="heaven-ledger" class="rounded-2xl border border-[#F0DDA6] divide-y divide-[#F0DDA6] overflow-hidden bg-white/60"></div>
+    </div>
+
+    <!-- Creature Collection -->
+    <div class="mb-8 text-left">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-xs opacity-60">Creature Collection</span>
+        <span id="collection-count" class="text-xs font-semibold">1/20</span>
+      </div>
+      <div class="w-full h-3 rounded-full bg-[#F0E4C8] overflow-hidden mb-3">
+        <div id="collection-bar" class="h-full rounded-full" style="width:5%; background:linear-gradient(90deg,#8FBF80,#5FA85A);"></div>
+      </div>
+
+      <div id="collection-achievement" class="hidden rounded-2xl px-4 py-3 text-sm font-semibold text-center mb-3" style="background:#FFF1C9; color:#8A6A2A; border:1px solid #F0DDA6;">
+        🏆 Creature Collector — you've officially adopted every anxious creature.
+      </div>
+
+      <button id="unlock-creature-btn" class="w-full px-5 py-3 rounded-full font-semibold text-sm shadow transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100" style="background:linear-gradient(135deg,#8FBF80,#5FA85A); color:#fff;">
+        Unlock a new creature — <span id="unlock-cost-label">80</span> pts
+      </button>
+      <div class="text-[11px] opacity-60 mt-2 text-center">Unlock points banked: <span id="banked-points">0</span></div>
+    </div>
+
+    <button id="heaven-restart" class="w-full sm:w-auto px-8 py-3 rounded-full font-semibold text-white shadow-lg transition-transform hover:scale-[1.03] active:scale-95" style="background:linear-gradient(135deg,#E8A23A,#C9791E);">
+      Meet another creature
+    </button>
+  </div>
+</div>
+
+<!-- ============ HELL SCREEN ============ -->
+<div id="hell-screen" class="screen">
+  <div id="embers"></div>
+
+  <div class="devil-card relative w-[92vw] max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-[#22090A]/90 backdrop-blur-sm shadow-2xl px-6 sm:px-9 py-8 sm:py-10 border border-[#5A2020]">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="flicker text-4xl">😈</div>
+      <div>
+        <div class="text-xs uppercase tracking-wide opacity-60" style="letter-spacing:.06em;">the docket</div>
+        <h2 class="text-xl sm:text-2xl font-bold" style="color:#FF9466;">Judge Malbolgia presiding</h2>
+      </div>
+    </div>
+
+    <p id="hell-intro" class="text-sm sm:text-base opacity-90 mb-2 leading-relaxed"></p>
+    <p id="hell-creature-line" class="text-xs opacity-60 mb-5"></p>
+
+    <div id="hell-taunts" class="space-y-2 mb-5"></div>
+
+    <label for="apology-input" class="block text-xs opacity-60 mb-2">Your written apology, mortal:</label>
+    <textarea id="apology-input" rows="4" maxlength="600"
+      class="w-full rounded-2xl bg-[#31100F] border border-[#5A2020] text-[#F5E9DA] placeholder-[#B98D7E] p-4 text-sm resize-none mb-2"
+      placeholder="Address the creature directly. Mean it."></textarea>
+    <div class="flex items-center justify-between mb-6">
+      <span id="apology-counter" class="text-[11px] opacity-50">0 / 600</span>
+      <span id="apology-attempts" class="text-[11px] opacity-50"></span>
+    </div>
+
+    <button id="apology-submit" class="w-full px-8 py-3 rounded-full font-semibold shadow-lg transition-transform hover:scale-[1.02] active:scale-95" style="background:linear-gradient(135deg,#FF5A1F,#B4270C); color:#FFF3E9;">
+      Plead your case
+    </button>
+
+    <div id="hell-restart-wrap" class="hidden mt-4 text-center">
+      <button id="hell-restart" class="px-6 py-2.5 rounded-full font-semibold text-sm border border-[#5A2020] text-[#F5E9DA] hover:bg-[#3A1414] transition-colors">
+        Return to the mortal realm
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =========================================================
+     DATA: dialogue, taunts, compliments, titles, ledger items
+  ========================================================= */
+  const beggingLines = [
+    "Wait— WAIT. I have a family. Several, actually. Overlapping.",
+    "I taste terrible, I promise. Like a sad cucumber.",
+    "Statistically, this is a weird way to go.",
+    "If you click me, who's going to finish my crossword?",
+    "I once beat a raccoon in a staring contest. I'm not ready to lose today.",
+    "Fun fact: I'm allergic to consequences.",
+    "I have 3 unread messages and a lot of unresolved feelings.",
+    "This is not how I pictured today.",
+    "My legs are basically noodles at this point. Overcooked ones.",
+    "I was promised a nap today, not a moral dilemma.",
+    "So... this is awkward. For both of us, probably.",
+    "I don't really know what to say here. Hi?",
+    "Is it weird that I'm making eye contact right now?",
+    "I practiced a speech for this moment and forgot all of it.",
+    "We've never actually met. This feels like a bad first date.",
+    "I'm sweating. Do creatures sweat? Asking for a friend.",
+    "Okay, this is more intense than I expected it to be.",
+    "I don't know the etiquette here. Do I bow? Do I run? I can't run.",
+    "I just wanted to see the sunset one more time.",
+    "There's a whole life I haven't lived yet.",
+    "Someone once told me kindness costs nothing. Prove them right?",
+    "I'm scared. I don't want to pretend I'm not.",
+    "Every creature deserves one more morning. Even me.",
+    "I didn't choose to be small and clickable. I just am.",
+    "Please. I'm not ready to stop existing.",
+    "I have dreams. Small ones. Like finding a warmer patch of grass.",
+    "You have more power over me right now than anyone ever has.",
+    "Oh sure, take your time deciding my fate. No rush.",
+    "Go ahead. Really. Be the main character.",
+    "I'm sure this will look great on your resume.",
+    "Click me. See if I care. (I care a lot.)",
+    "Wow, big scary human with a big scary mouse.",
+    "Careful, your finger looks dangerously close to a decision.",
+    "This is definitely the moral high ground you were looking for.",
+    "Please, continue looming. It's very heroic.",
+    "I'd clap for your bravery but I'm too busy panicking.",
+    "You caught me. That took patience. I respect that.",
+    "Whatever you choose, thanks for playing with me.",
+    "You've been kind of gentle this whole time, actually.",
+    "I think you're a good person. I could just tell.",
+    "Even if this ends badly, I liked our little chase.",
+    "You didn't have to be nice to a pixel creature. But you were.",
+    "I hope someone is this patient with you someday.",
+    "Thanks for noticing me. Most people don't.",
+    "If it helps, I forgive you in advance either way.",
+    "THIS. IS. NOT. HOW. MY. STORY. ENDS.",
+    "Let it be known I fought bravely and mostly just ran in circles.",
+    "The council of small creatures will remember this day.",
+    "History is written by whoever doesn't get clicked.",
+    "I can see the light. It's just my screen brightness, but still.",
+    "Tell my legs they did their best.",
+    "In another timeline, we are best friends.",
+    "The countdown is louder than my own heartbeat right now.",
+    "This is either my villain origin story or my finale. No pressure.",
+    "Whatever happens next, let it be legendary."
+  ];
+
+  const heavenTitles = [
+    "Keeper of Chill", "Saint of Restraint", "The Merciful Cursor-Holder",
+    "Grand Patron of Small Things", "Duke of Not Clicking",
+    "The Gentle Giant (Comparatively)", "Certified Good Egg",
+    "Ambassador of Second Chances", "The Patient One",
+    "Guardian of Tiny Creatures", "Minister of Mercy",
+    "The Unbothered Benefactor"
+  ];
+
+  const heavenCompliments = [
+    "You waited. That's rarer than you think.",
+    "Your patience has main-character energy.",
+    "Somewhere, a tiny creature is grateful right now.",
+    "You chose kindness when no one was really watching. We were. But still.",
+    "That was a genuinely good instinct.",
+    "You're the reason good things happen to good people.",
+    "Small mercy, big karma.",
+    "The universe noticed. It always does.",
+    "You made the harder choice. That's the whole point.",
+    "That's the energy the world could use more of.",
+    "Somewhere a bell rang, and it was for you.",
+    "Ten out of ten, would trust you with a puppy.",
+    "You just made mercy look easy.",
+    "Future you is proud of current you.",
+    "Not everyone would have waited. You did."
+  ];
+
+  const ledgerPool = [
+    {label:"Patience under pressure", min:10, max:20},
+    {label:"Resisted temptation", min:8, max:18},
+    {label:"Basic decency", min:5, max:15},
+    {label:"Emotional intelligence", min:10, max:22},
+    {label:"Let a small thing live", min:14, max:26},
+    {label:"Good vibes emitted", min:5, max:12},
+    {label:"Restraint bonus", min:10, max:18},
+    {label:"Kindness multiplier", min:6, max:14},
+    {label:"Did not need the power trip", min:8, max:16},
+    {label:"Read the room correctly", min:6, max:13}
+  ];
+
+  const hellIntros = [
+    "So. You had it cornered, exhausted, begging in complete sentences — and you clicked anyway. Bold. Wrong, but bold.",
+    "Ah, another one. The creature was mid-sentence. You clicked mid-sentence. Rude, honestly.",
+    "Let the record show: it was tired, it was scared, and it was speaking English. You clicked anyway.",
+    "I've seen a lot of cases down here. Yours is somehow still disappointing."
+  ];
+
+  const tauntsShort = [
+    "That's it? My grandmother writes longer grocery lists.",
+    "Blink and you'd miss that 'apology.' Try again, mortal.",
+    "I've heard yawns with more remorse in them."
+  ];
+  const tauntsShout = [
+    "SCREAMING doesn't count as sincerity, dear.",
+    "All caps isn't an apology, it's a cry for attention. Try lowercase feelings.",
+    "Down here we call that 'yelling at a therapist.' Try again, softer."
+  ];
+  const tauntsInsincere = [
+    "Ah yes, the classic 'sorry not sorry.' Bold. Wrong, but bold.",
+    "Blaming the victim in your own apology? Chef's kiss. Rejected.",
+    "I detect zero remorse and several excuses. Try harder."
+  ];
+  const tauntsGeneric = [
+    "Generic. Forgettable. I've read better apologies on parking tickets.",
+    "That apology had the emotional depth of a fortune cookie.",
+    "Try again — with feeling, not filler.",
+    "Close, but I can still smell the insincerity from up here. Or down here. You know what I mean."
+  ];
+  const acceptMessages = [
+    "...Fine. FINE. That actually sounded sincere. Disgustingly wholesome of you.",
+    "Well, I'll be damned — pun intended. Apology accepted.",
+    "Even my flames are moved. Go on, get out of here.",
+    "That's what real remorse sounds like. Ugh. I hate that it worked."
+  ];
+
+  /* =========================================================
+     CREATURE COLLECTION DATA
+     Each creature: unique emoji, name, personality, color
+     palette (used to tint the creature via CSS vars), and a
+     small idle-animation variant.
+  ========================================================= */
+  const CREATURES = [
+    { emoji:'🦊', name:'Foxie',    personality:'Trusts no one, especially shadows.',                         body:'#FF8C69', belly:'#FFF3E0', anim:'anim-bob' },
+    { emoji:'🐼', name:'Bamboo',   personality:'Would rather nap than run.',                                 body:'#3A3A3A', belly:'#F5F5F0', anim:'anim-sway' },
+    { emoji:'🐸', name:'Frogo',    personality:'Professional puddle inspector.',                              body:'#6FBF73', belly:'#EAF7E0', anim:'anim-wiggle' },
+    { emoji:'🐧', name:'Waddles',  personality:'Cold, but emotionally colder.',                                body:'#2E3A46', belly:'#F0F4F8', anim:'anim-pulse' },
+    { emoji:'🐨', name:'Snoozle',  personality:'Perpetually one nap behind.',                                  body:'#9AA5AD', belly:'#F2F2F0', anim:'breathing' },
+    { emoji:'🐰', name:'Hoppy',    personality:'Twitchy. Deeply twitchy.',                                     body:'#F4C9D6', belly:'#FFF6F8', anim:'anim-bob' },
+    { emoji:'🦄', name:'Sparkle',  personality:'Believes in magic and personal space.',                        body:'#D8B4F8', belly:'#FBF3FF', anim:'anim-sway' },
+    { emoji:'🐱', name:'Whiskers', personality:'Judges you silently. Always.',                                 body:'#E8A548', belly:'#FFF6E8', anim:'anim-wiggle' },
+    { emoji:'🐶', name:'Buddy',    personality:'Way too trusting for this game.',                              body:'#C08552', belly:'#FDF2E2', anim:'anim-pulse' },
+    { emoji:'🐹', name:'Nibbles',  personality:'Cheeks full of anxiety.',                                      body:'#F0B94D', belly:'#FFF8E6', anim:'breathing' },
+    { emoji:'🐻', name:'Grizzy',   personality:'Big, soft, surprisingly nimble.',                               body:'#8B5E3C', belly:'#F3E4D2', anim:'anim-bob' },
+    { emoji:'🦁', name:'Mane-iac', personality:'King of hiding in plain sight.',                                body:'#E3A62F', belly:'#FFF3D6', anim:'anim-sway' },
+    { emoji:'🐯', name:'Stripes',  personality:'All bark, mostly run.',                                        body:'#EF9B3C', belly:'#FFF0DC', anim:'anim-wiggle' },
+    { emoji:'🐮', name:'Moozart',  personality:'Moderately dramatic about everything.',                         body:'#3A3A3A', belly:'#FFFFFF', anim:'anim-pulse' },
+    { emoji:'🐷', name:'Truffle',  personality:'Snorts when nervous. Snorts a lot.',                            body:'#F4A6B7', belly:'#FFEFF2', anim:'breathing' },
+    { emoji:'🐵', name:'Bananas',  personality:'Easily distracted, hard to catch.',                             body:'#A9744F', belly:'#F5E3CE', anim:'anim-bob' },
+    { emoji:'🦥', name:'Slowmo',   personality:'Physically incapable of hurrying, but tries.',                  body:'#8C9A6E', belly:'#EFF3E4', anim:'anim-sway' },
+    { emoji:'🐙', name:'Inky',     personality:'Has eight plans to escape. Uses none.',                         body:'#8E6FC4', belly:'#EDE5FA', anim:'anim-wiggle' },
+    { emoji:'👻', name:'Ghosty',   personality:"Cannot technically be touched... but still doesn't like it.",   body:'#CFE3F0', belly:'#FFFFFF', anim:'anim-pulse' },
+    { emoji:'🤖', name:'Byte',     personality:'Running on social anxiety.',                                    body:'#9FB3C8', belly:'#EAF0F5', anim:'breathing' }
+  ];
+  const ANIM_CLASSES = ['breathing','anim-bob','anim-sway','anim-wiggle','anim-pulse'];
+  const UNLOCK_COST = 80;
+
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function rand(min,max){ return Math.random()*(max-min)+min; }
+  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+  function lerp(a,b,t){ return a + (b-a)*t; }
+
+  /* =========================================================
+     STATE
+  ========================================================= */
+  const gameScreen = document.getElementById('game-screen');
+  const heavenScreen = document.getElementById('heaven-screen');
+  const hellScreen = document.getElementById('hell-screen');
+  const creature = document.getElementById('creature');
+  const creatureInner = creature.querySelector('.creature-inner');
+  const creatureEmojiEl = document.getElementById('creature-emoji');
+  const creatureNameLabel = document.getElementById('creature-name-label');
+  const speechBubble = document.getElementById('speech-bubble');
+  const energyBar = document.getElementById('energy-bar');
+  const countdownRing = document.getElementById('countdown-ring');
+  const countdownCircle = document.getElementById('countdown-circle');
+  const countdownNumber = document.getElementById('countdown-number');
+
+  const SIZE = 96;
+  let winW = window.innerWidth, winH = window.innerHeight;
+  const EDGE_MARGIN = 40;
+  const GROUND_H_RATIO = 0.14;
+
+  let pos = { x: winW/2 - SIZE/2, y: winH/2 - SIZE/2 };
+  let target = { x: pos.x, y: pos.y };
+  let mouse = { x: -9999, y: -9999, active:false };
+  let energy = 100;
+  let state = 'idle'; // idle | fleeing | hesitate | panic | fakeout | exhausted
+  let stateTimer = 0;
+  let idleTarget = { x: pos.x, y: pos.y };
+  let lastIdleWander = 0;
+  let running = true;
+  let gameOverHandled = false;
+  let countdownRaf = null;
+  let countdownDeadline = 0;
+  const COUNTDOWN_MS = 7000;
+
+  const FLEE_RADIUS = 230;
+  const PANIC_RADIUS = 100;
+
+  /* -------- creature collection state (persists for the session) -------- */
+  let idleAnimClass = 'breathing';
+  let unlockedIndices = new Set();
+  let currentCreatureIndex = Math.floor(Math.random() * CREATURES.length);
+  unlockedIndices.add(currentCreatureIndex);
+  let totalPoints = 0; // unlock currency, banked across rounds this session
+
+  function applyCreature(idx){
+    const c = CREATURES[idx];
+    document.documentElement.style.setProperty('--creature-body', c.body);
+    document.documentElement.style.setProperty('--creature-belly', c.belly);
+    creatureEmojiEl.textContent = c.emoji;
+    if(creatureNameLabel) creatureNameLabel.textContent = c.name + ' \u00B7 ' + c.personality;
+
+    ANIM_CLASSES.forEach(cls => creature.classList.remove(cls));
+    idleAnimClass = c.anim;
+    if(state !== 'exhausted'){
+      creature.classList.add(idleAnimClass);
+    }
+  }
+  applyCreature(currentCreatureIndex);
+
+  function topBound(){ return 90; }
+  function bottomBound(){ return winH - winH*GROUND_H_RATIO - SIZE - 10; }
+  function leftBound(){ return EDGE_MARGIN; }
+  function rightBound(){ return winW - SIZE - EDGE_MARGIN; }
+
+  window.addEventListener('resize', ()=>{
+    winW = window.innerWidth; winH = window.innerHeight;
+    pos.x = clamp(pos.x, leftBound(), rightBound());
+    pos.y = clamp(pos.y, topBound(), bottomBound());
+  });
+
+  window.addEventListener('mousemove', (e)=>{
+    mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true;
+  });
+  window.addEventListener('mouseleave', ()=>{ mouse.active = false; });
+  window.addEventListener('touchmove', (e)=>{
+    if(e.touches && e.touches[0]){
+      mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; mouse.active = true;
+    }
+  }, {passive:true});
+
+  /* =========================================================
+     BLINKING (idle life)
+  ========================================================= */
+  function scheduleBlink(){
+    const delay = rand(1800, 4600);
+    setTimeout(()=>{
+      if(state !== 'exhausted'){
+        creatureEmojiEl.classList.add('blink');
+        setTimeout(()=>creatureEmojiEl.classList.remove('blink'), 180);
+      }
+      scheduleBlink();
+    }, delay);
+  }
+  scheduleBlink();
+
+  /* =========================================================
+     MOVEMENT / AI LOOP
+  ========================================================= */
+  let lastTs = null;
+
+  function centerOf(p){ return { x: p.x + SIZE/2, y: p.y + SIZE/2 }; }
+
+  function pickFleeTarget(){
+    const c = centerOf(pos);
+    const dx = c.x - mouse.x;
+    const dy = c.y - mouse.y;
+    const dist = Math.max(1, Math.hypot(dx,dy));
+    let dirX = dx/dist, dirY = dy/dist;
+
+    // edge avoidance: bias direction away from nearest edges
+    const edgeMargin = 130;
+    if(c.x < edgeMargin) dirX += (edgeMargin - c.x)/edgeMargin;
+    if(c.x > winW - edgeMargin) dirX -= (c.x - (winW-edgeMargin))/edgeMargin;
+    if(c.y < topBound()+edgeMargin) dirY += ((topBound()+edgeMargin) - c.y)/edgeMargin;
+    if(c.y > bottomBound() - edgeMargin) dirY -= (c.y - (bottomBound()-edgeMargin))/edgeMargin;
+
+    const norm = Math.max(0.001, Math.hypot(dirX,dirY));
+    dirX/=norm; dirY/=norm;
+
+    const travel = rand(120, 260);
+    const jitterAngle = rand(-0.5,0.5);
+    const cos = Math.cos(jitterAngle), sin = Math.sin(jitterAngle);
+    const jdx = dirX*cos - dirY*sin;
+    const jdy = dirX*sin + dirY*cos;
+
+    let tx = c.x + jdx*travel - SIZE/2;
+    let ty = c.y + jdy*travel - SIZE/2;
+    tx = clamp(tx, leftBound(), rightBound());
+    ty = clamp(ty, topBound(), bottomBound());
+    return { x: tx, y: ty };
+  }
+
+  function pickPanicTarget(){
+    const c = centerOf(pos);
+    const dx = c.x - mouse.x, dy = c.y - mouse.y;
+    const away = Math.atan2(dy,dx);
+    const finalAngle = away + rand(-0.9,0.9);
+    const travel = rand(60,140);
+    let tx = c.x + Math.cos(finalAngle)*travel - SIZE/2;
+    let ty = c.y + Math.sin(finalAngle)*travel - SIZE/2;
+    tx = clamp(tx, leftBound(), rightBound());
+    ty = clamp(ty, topBound(), bottomBound());
+    return {x:tx,y:ty};
+  }
+
+  function pickFakeoutTarget(){
+    const c = centerOf(pos);
+    const dx = mouse.x - c.x, dy = mouse.y - c.y;
+    const dist = Math.max(1, Math.hypot(dx,dy));
+    const travel = Math.min(dist*0.35, 70);
+    let tx = c.x + (dx/dist)*travel - SIZE/2;
+    let ty = c.y + (dy/dist)*travel - SIZE/2;
+    tx = clamp(tx, leftBound(), rightBound());
+    ty = clamp(ty, topBound(), bottomBound());
+    return {x:tx,y:ty};
+  }
+
+  function pickIdleWander(){
+    let tx = pos.x + rand(-60,60);
+    let ty = pos.y + rand(-40,40);
+    tx = clamp(tx, leftBound(), rightBound());
+    ty = clamp(ty, topBound(), bottomBound());
+    return {x:tx,y:ty};
+  }
+
+  function enterExhausted(){
+    if(state === 'exhausted') return;
+    state = 'exhausted';
+    stateTimer = 0;
+    target = { x: pos.x, y: pos.y };
+    creature.classList.remove(idleAnimClass);
+    creature.classList.add('exhausted','shiver');
+    showBubble(pick(beggingLines));
+    startCountdown();
+  }
+
+  function showBubble(text){
+    speechBubble.textContent = text;
+    speechBubble.classList.add('show');
+  }
+  function hideBubble(){
+    speechBubble.classList.remove('show');
+  }
+
+  function startCountdown(){
+    countdownRing.style.opacity = '1';
+    countdownNumber.style.opacity = '1';
+    const circumference = 2 * Math.PI * 50;
+    countdownCircle.setAttribute('stroke-dasharray', circumference.toFixed(3));
+    countdownDeadline = performance.now() + COUNTDOWN_MS;
+
+    function step(){
+      if(gameOverHandled) return;
+      const now = performance.now();
+      const remaining = Math.max(0, countdownDeadline - now);
+      const frac = remaining / COUNTDOWN_MS;
+      countdownCircle.setAttribute('stroke-dashoffset', (circumference * (1-frac)).toFixed(3));
+      countdownNumber.textContent = Math.ceil(remaining/1000);
+      if(remaining <= 0){
+        onSurvived();
+        return;
+      }
+      countdownRaf = requestAnimationFrame(step);
+    }
+    countdownRaf = requestAnimationFrame(step);
+  }
+
+  function stopCountdown(){
+    if(countdownRaf) cancelAnimationFrame(countdownRaf);
+    countdownRaf = null;
+  }
+
+  function updateSquash(vx, vy, speed){
+    if(state === 'exhausted'){ creatureInner.style.transform = ''; return; }
+    const angle = Math.atan2(vy, vx) * 180/Math.PI;
+    const stretch = clamp(speed/14, 0, 0.35);
+    creatureInner.style.transform = `rotate(${angle*0.06}deg) scale(${1+stretch},${1-stretch*0.6})`;
+  }
+
+  function tick(ts){
+    if(!running) return;
+    if(lastTs === null) lastTs = ts;
+    const dt = Math.min(40, ts - lastTs);
+    lastTs = ts;
+
+    if(state !== 'exhausted'){
+      const c = centerOf(pos);
+      const distToMouse = mouse.active ? Math.hypot(c.x-mouse.x, c.y-mouse.y) : Infinity;
+
+      stateTimer -= dt;
+
+      if(energy <= 0){
+        enterExhausted();
+      } else if(distToMouse < FLEE_RADIUS){
+        if(state === 'hesitate' || state === 'fakeout'){
+          if(stateTimer <= 0){
+            if(distToMouse < PANIC_RADIUS){
+              state = 'panic'; target = pickPanicTarget();
+            } else {
+              state = 'fleeing'; target = pickFleeTarget();
+            }
+            stateTimer = rand(280, 700);
+          }
+        } else if(distToMouse < PANIC_RADIUS){
+          if(state !== 'panic' || stateTimer <= 0){
+            state = 'panic'; target = pickPanicTarget();
+            stateTimer = rand(160, 340);
+          }
+        } else {
+          const roll = Math.random();
+          if(roll < 0.008){
+            state = 'hesitate'; target = { x: pos.x, y: pos.y };
+            stateTimer = rand(220, 520);
+          } else if(roll < 0.014){
+            state = 'fakeout'; target = pickFakeoutTarget();
+            stateTimer = rand(160, 300);
+          } else if(state !== 'fleeing' || stateTimer <= 0){
+            state = 'fleeing'; target = pickFleeTarget();
+            stateTimer = rand(420, 900);
+          }
+        }
+        creature.classList.remove(idleAnimClass);
+      } else {
+        if(state !== 'idle'){
+          state = 'idle';
+          creature.classList.add(idleAnimClass);
+        }
+        if(ts - lastIdleWander > rand(1800, 3600)){
+          idleTarget = pickIdleWander();
+          lastIdleWander = ts;
+        }
+        target = idleTarget;
+      }
+
+      // energy dynamics
+      const speedDemand = (state==='panic') ? 1 : (state==='fleeing') ? 0.6 : (state==='fakeout') ? 0.5 : 0.05;
+      if(state==='panic' || state==='fleeing' || state==='fakeout'){
+        energy -= speedDemand * dt * 0.018;
+      } else {
+        energy += dt * 0.006;
+      }
+      energy = clamp(energy, 0, 100);
+      energyBar.style.width = energy + '%';
+      energyBar.style.backgroundColor = energy > 45 ? '#7BC67E' : (energy > 18 ? '#F0C24B' : '#E8623A');
+
+      // move toward target
+      const speedFactor = state==='panic' ? 0.30 : state==='fleeing' ? 0.16 : state==='fakeout' ? 0.22 : state==='hesitate' ? 0.02 : 0.05;
+      const prevX = pos.x, prevY = pos.y;
+      pos.x = lerp(pos.x, target.x, speedFactor);
+      pos.y = lerp(pos.y, target.y, speedFactor);
+      pos.x = clamp(pos.x, leftBound(), rightBound());
+      pos.y = clamp(pos.y, topBound(), bottomBound());
+
+      const vx = pos.x - prevX, vy = pos.y - prevY;
+      const speed = Math.hypot(vx,vy);
+      updateSquash(vx, vy, speed);
+    }
+
+    creature.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0)`;
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  /* =========================================================
+     CLICK HANDLING
+  ========================================================= */
+  function showToast(text){
+    const c = centerOf(pos);
+    const el = document.createElement('div');
+    el.className = 'float-toast';
+    el.textContent = text;
+    el.style.left = c.x + 'px';
+    el.style.top = (pos.y - 6) + 'px';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 950);
+  }
+
+  const nearMissLines = ["Nice try!", "Too slow!", "Almost!", "So close!", "Whoosh!"];
+
+  creature.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    if(state === 'exhausted' && !gameOverHandled){
+      onCaught();
+    } else if(state !== 'exhausted'){
+      showToast(pick(nearMissLines));
+    }
+  });
+
+  /* =========================================================
+     HEAVEN: collection UI
+  ========================================================= */
+  function updateHeavenCollectionUI(){
+    const countEl = document.getElementById('collection-count');
+    const barEl = document.getElementById('collection-bar');
+    const bankedEl = document.getElementById('banked-points');
+    const btn = document.getElementById('unlock-creature-btn');
+    const achievement = document.getElementById('collection-achievement');
+
+    countEl.textContent = unlockedIndices.size + '/' + CREATURES.length;
+    barEl.style.width = Math.round(unlockedIndices.size / CREATURES.length * 100) + '%';
+    bankedEl.textContent = totalPoints.toLocaleString();
+
+    if(unlockedIndices.size >= CREATURES.length){
+      btn.classList.add('hidden');
+      achievement.classList.remove('hidden');
+    } else {
+      achievement.classList.add('hidden');
+      btn.classList.remove('hidden');
+      btn.disabled = totalPoints < UNLOCK_COST;
+    }
+  }
+
+  document.getElementById('unlock-creature-btn').addEventListener('click', ()=>{
+    if(unlockedIndices.size >= CREATURES.length) return;
+    if(totalPoints < UNLOCK_COST) return;
+    totalPoints -= UNLOCK_COST;
+
+    const lockedIdx = CREATURES.map((_,i)=>i).filter(i=>!unlockedIndices.has(i));
+    const newIdx = lockedIdx[Math.floor(Math.random()*lockedIdx.length)];
+    unlockedIndices.add(newIdx);
+    currentCreatureIndex = newIdx;
+    applyCreature(newIdx);
+
+    const c = CREATURES[newIdx];
+    document.getElementById('heaven-creature-emoji').textContent = '\u2728 ' + c.emoji;
+
+    updateHeavenCollectionUI();
+  });
+
+  /* =========================================================
+     OUTCOME: SURVIVED -> HEAVEN
+  ========================================================= */
+  function onSurvived(){
+    if(gameOverHandled) return;
+    gameOverHandled = true;
+    stopCountdown();
+    hideBubble();
+    running = false;
+
+    // build ledger
+    const shuffled = [...ledgerPool].sort(()=>Math.random()-0.5).slice(0, 4 + Math.floor(Math.random()*2));
+    let total = 0;
+    const ledgerHtml = shuffled.map(item=>{
+      const pts = Math.round(rand(item.min, item.max));
+      total += pts;
+      return `<div class="flex items-center justify-between px-4 py-2.5 text-sm">
+        <span class="opacity-80">${item.label}</span>
+        <span class="font-semibold" style="color:#B4791C;">+${pts}</span>
+      </div>`;
+    }).join('');
+    document.getElementById('heaven-ledger').innerHTML = ledgerHtml;
+    document.getElementById('heaven-karma').textContent = '+' + total;
+    document.getElementById('heaven-points').textContent = (total * 12).toLocaleString();
+
+    // bank unlock currency for the creature collection
+    totalPoints += total;
+
+    const respect = clamp(Math.round(70 + total*0.6), 0, 100);
+    document.getElementById('heaven-respect-bar').style.width = respect + '%';
+    document.getElementById('heaven-respect-num').textContent = respect + '/100';
+
+    document.getElementById('heaven-title').textContent = pick(heavenTitles);
+
+    const currentC = CREATURES[currentCreatureIndex];
+    document.getElementById('heaven-creature-emoji').textContent = '\u2728 ' + currentC.emoji;
+
+    const compliments = [...heavenCompliments].sort(()=>Math.random()-0.5).slice(0,3);
+    document.getElementById('heaven-compliments').innerHTML = compliments.map(c=>
+      `<li class="flex gap-2"><span style="color:#D9A544;">✦</span><span>${c}</span></li>`
+    ).join('');
+
+    updateHeavenCollectionUI();
+    switchScreen(heavenScreen);
+  }
+
+  /* =========================================================
+     OUTCOME: CAUGHT -> HELL
+  ========================================================= */
+  const apologyInput = document.getElementById('apology-input');
+  const apologyCounter = document.getElementById('apology-counter');
+  const apologyAttempts = document.getElementById('apology-attempts');
+  const apologySubmit = document.getElementById('apology-submit');
+  const hellTaunts = document.getElementById('hell-taunts');
+  const hellRestartWrap = document.getElementById('hell-restart-wrap');
+  let attempts = 0;
+
+  function onCaught(){
+    if(gameOverHandled) return;
+    gameOverHandled = true;
+    stopCountdown();
+    hideBubble();
+    running = false;
+    attempts = 0;
+    apologyInput.value = '';
+    apologyCounter.textContent = '0 / 600';
+    apologyAttempts.textContent = '';
+    hellTaunts.innerHTML = '';
+    hellRestartWrap.classList.add('hidden');
+    apologySubmit.classList.remove('hidden');
+    apologyInput.disabled = false;
+    document.getElementById('hell-intro').textContent = pick(hellIntros);
+
+    const c = CREATURES[currentCreatureIndex];
+    document.getElementById('hell-creature-line').textContent =
+      'The victim: ' + c.emoji + ' ' + c.name + ' \u2014 "' + c.personality + '"';
+
+    spawnEmbers();
+    switchScreen(hellScreen);
+  }
+
+  apologyInput.addEventListener('input', ()=>{
+    apologyCounter.textContent = apologyInput.value.length + ' / 600';
+  });
+
+  function evaluateApology(raw){
+    const text = raw.trim();
+    const lower = text.toLowerCase();
+
+    if(text.length < 15){
+      return { accepted:false, message: pick(tauntsShort) };
+    }
+
+    const letters = text.replace(/[^a-zA-Z]/g,'');
+    const upperCount = (text.match(/[A-Z]/g)||[]).length;
+    const shoutRatio = letters.length ? upperCount/letters.length : 0;
+    if(shoutRatio > 0.5 && letters.length > 6){
+      return { accepted:false, message: pick(tauntsShout) };
+    }
+
+    const insincereMarkers = ['not my fault','whatever','idk','lol','sorry not sorry',"i don't care",'not sorry','meh','ok fine'];
+    if(insincereMarkers.some(m=>lower.includes(m))){
+      return { accepted:false, message: pick(tauntsInsincere) };
+    }
+
+    let score = 0;
+    const sincerityWords = ['sorry','apolog','regret','forgive','shouldn\'t have','wrong','mistake','fault','promise',
+      'understand','feel','sincer','never again','ashamed','learn','careless','thoughtless','patience','scared','hurt'];
+    sincerityWords.forEach(w=>{ if(lower.includes(w)) score += 1; });
+
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    score += Math.min(3, Math.floor(wordCount/12));
+
+    if(lower.includes('you')) score += 1;
+
+    const exclaimCount = (text.match(/!/g)||[]).length;
+    if(exclaimCount > 3) score -= 1;
+
+    if(score >= 5){
+      return { accepted:true, message: pick(acceptMessages) };
+    }
+    return { accepted:false, message: pick(tauntsGeneric) };
+  }
+
+  function addTaunt(text){
+    const el = document.createElement('div');
+    el.className = 'hell-taunt text-sm rounded-2xl px-4 py-3 bg-[#3A1414] border border-[#5A2020]';
+    el.textContent = text;
+    hellTaunts.prepend(el);
+  }
+
+  apologySubmit.addEventListener('click', ()=>{
+    const val = apologyInput.value;
+    if(!val.trim()){
+      addTaunt("Silence isn't an apology either. Try words.");
+      return;
+    }
+    attempts++;
+    apologyAttempts.textContent = attempts === 1 ? '1 attempt' : attempts + ' attempts';
+    const result = evaluateApology(val);
+    addTaunt(result.message);
+    if(result.accepted){
+      apologySubmit.classList.add('hidden');
+      apologyInput.disabled = true;
+      hellRestartWrap.classList.remove('hidden');
+    }
+  });
+
+  function spawnEmbers(){
+    const container = document.getElementById('embers');
+    container.innerHTML = '';
+    const count = 22;
+    for(let i=0;i<count;i++){
+      const e = document.createElement('div');
+      e.className = 'ember';
+      const size = rand(4,12);
+      e.style.width = size+'px';
+      e.style.height = size+'px';
+      e.style.left = rand(0,100)+'%';
+      e.style.setProperty('--drift', rand(-60,60)+'px');
+      e.style.animationDuration = rand(4,9)+'s';
+      e.style.animationDelay = rand(0,6)+'s';
+      container.appendChild(e);
+    }
+  }
+
+  /* =========================================================
+     SCREEN SWITCH / RESTART
+  ========================================================= */
+  function switchScreen(target){
+    [gameScreen, heavenScreen, hellScreen].forEach(s=>s.classList.remove('active'));
+    target.classList.add('active');
+  }
+
+  function resetGame(){
+    gameOverHandled = false;
+    running = true;
+    energy = 100;
+    state = 'idle';
+    pos = { x: winW/2 - SIZE/2, y: winH/2 - SIZE/2 };
+    target = { x: pos.x, y: pos.y };
+    idleTarget = { x: pos.x, y: pos.y };
+    mouse = { x:-9999, y:-9999, active:false };
+    lastTs = null;
+    creature.classList.remove('exhausted','shiver');
+    creature.classList.add(idleAnimClass);
+    countdownRing.style.opacity = '0';
+    countdownNumber.style.opacity = '0';
+    hideBubble();
+    energyBar.style.width = '100%';
+    energyBar.style.backgroundColor = '#7BC67E';
+    switchScreen(gameScreen);
+    requestAnimationFrame(tick);
+  }
+
+  document.getElementById('heaven-restart').addEventListener('click', resetGame);
+  document.getElementById('hell-restart').addEventListener('click', resetGame);
+
+})();
+</script>
+</body>
+</html>
