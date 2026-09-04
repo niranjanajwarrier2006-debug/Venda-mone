@@ -1,8 +1,7 @@
 # Venda Mone 🎯
 
 
-🚀 **Live Demo:** Check out the live project here: idyllic-daffodil-b325b9.netlify.app
-
+🚀 **Live Demo:** Check out the live project here: [https://idyllic-daffodil-b325b9.netlify.app]
 
 ## Basic Details
 
